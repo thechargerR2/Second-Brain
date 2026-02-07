@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Chat with Your Knowledge Base</h1>
+
+<form method="post" class="chat-form">
+    <label for="provider">AI Provider</label>
+    <select name="provider" id="provider">
+        <option value="claude" {% if provider == 'claude' %}selected{% endif %}>Claude</option>
+        <option value="gemini" {% if provider == 'gemini' %}selected{% endif %}>Gemini</option>
+    </select>
+
+    <label for="question">Ask a question</label>
+    <textarea name="question" id="question" rows="4" required placeholder="Ask anything about your stored knowledge...">{{ question }}</textarea>
+
+    <button type="submit">Ask</button>
+</form>
+
+{% if answer %}
+<div class="answer-box">
+    <h2>Answer ({{ provider }})</h2>
+    <div class="answer-content">{{ answer }}</div>
+</div>
+{% endif %}
+{% endblock %}

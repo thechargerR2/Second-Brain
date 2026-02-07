@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Add Entry</h1>
+
+<form method="post" class="add-form">
+    <label for="type">Type</label>
+    <select name="type" id="type" onchange="toggleUrl()">
+        <option value="note">Note</option>
+        <option value="link">Link</option>
+        <option value="document">Document</option>
+    </select>
+
+    <label for="title">Title</label>
+    <input type="text" name="title" id="title" required placeholder="Entry title">
+
+    <div id="url-field" style="display: none;">
+        <label for="url">URL</label>
+        <input type="url" name="url" id="url" placeholder="https://example.com">
+    </div>
+
+    <label for="content">Content</label>
+    <textarea name="content" id="content" rows="8" placeholder="Write your content here..."></textarea>
+
+    <button type="submit">Save Entry</button>
+</form>
+
+<script>
+function toggleUrl() {
+    const type = document.getElementById('type').value;
+    document.getElementById('url-field').style.display = type === 'link' ? 'block' : 'none';
+}
+</script>
+{% endblock %}

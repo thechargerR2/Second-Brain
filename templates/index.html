@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Dashboard</h1>
+
+<form class="search-form" method="get" action="{{ url_for('index') }}">
+    <input type="text" name="search" placeholder="Search entries..." value="{{ search }}">
+    <button type="submit">Search</button>
+    {% if search %}
+    <a href="{{ url_for('index') }}" class="btn btn-secondary">Clear</a>
+    {% endif %}
+</form>
+
+{% if entries %}
+<div class="entries">
+    {% for entry in entries %}
+    <div class="entry-card">
+        <div class="entry-header">
+            <span class="badge badge-{{ entry.type }}">{{ entry.type }}</span>
+            <h3>{{ entry.title }}</h3>
+        </div>
+        {% if entry.content %}
+        <p class="entry-content">{{ entry.content[:200] }}{% if entry.content|length > 200 %}...{% endif %}</p>
+        {% endif %}
+        {% if entry.url %}
+        <p class="entry-url"><a href="{{ entry.url }}" target="_blank">{{ entry.url }}</a></p>
+        {% endif %}
+        <div class="entry-footer">
+            <span class="entry-date">{{ entry.created_at }}</span>
+            <div class="entry-actions">
+                <form method="post" action="{{ url_for('summarize', entry_id=entry.id) }}" class="inline-form">
+                    <select name="provider">
+                        <option value="claude">Claude</option>
+                        <option value="gemini">Gemini</option>
+                    </select>
+                    <button type="submit" class="btn btn-small">Summarize</button>
+                </form>
+                <form method="post" action="{{ url_for('delete', entry_id=entry.id) }}" class="inline-form" onsubmit="return confirm('Delete this entry?')">
+                    <button type="submit" class="btn btn-small btn-danger">Delete</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<p class="empty-state">No entries found. <a href="{{ url_for('add') }}">Add your first entry</a>.</p>
+{% endif %}
+{% endblock %}
