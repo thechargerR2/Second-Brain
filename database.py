@@ -24,15 +24,34 @@ def init_db():
         )
         """
     )
+    # Add drive_file_id column if it doesn't exist (migration)
+    try:
+        conn.execute("ALTER TABLE entries ADD COLUMN drive_file_id TEXT")
+        conn.commit()
+    except sqlite3.OperationalError:
+        pass  # Column already exists
+
     conn.commit()
     conn.close()
 
 
 def add_entry(entry_type, title, content, url=""):
     conn = get_connection()
-    conn.execute(
+    cursor = conn.execute(
         "INSERT INTO entries (type, title, content, url) VALUES (?, ?, ?, ?)",
         (entry_type, title, content, url),
+    )
+    entry_id = cursor.lastrowid
+    conn.commit()
+    conn.close()
+    return entry_id
+
+
+def update_drive_file_id(entry_id, file_id):
+    conn = get_connection()
+    conn.execute(
+        "UPDATE entries SET drive_file_id = ? WHERE id = ?",
+        (file_id, entry_id),
     )
     conn.commit()
     conn.close()

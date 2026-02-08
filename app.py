@@ -8,6 +8,14 @@ from ai_providers import (
     summarize_with_claude,
     summarize_with_gemini,
 )
+from drive_sync import (
+    sync_entry_to_drive,
+    delete_entry_from_drive,
+    sync_all_entries,
+    get_drive_service,
+    is_drive_configured,
+    is_drive_authenticated,
+)
 
 load_dotenv()
 
@@ -15,6 +23,14 @@ app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "dev-secret-key")
 
 init_db()
+
+
+@app.context_processor
+def inject_drive_status():
+    return {
+        "drive_configured": is_drive_configured(),
+        "drive_authenticated": is_drive_authenticated(),
+    }
 
 
 @app.route("/")
@@ -34,7 +50,8 @@ def add():
         if not title:
             flash("Title is required.", "error")
             return render_template("add.html")
-        add_entry(entry_type, title, content, url)
+        entry_id = add_entry(entry_type, title, content, url)
+        sync_entry_to_drive(entry_id)
         flash("Entry added.", "success")
         return redirect(url_for("index"))
     return render_template("add.html")
@@ -42,6 +59,7 @@ def add():
 
 @app.route("/delete/<int:entry_id>", methods=["POST"])
 def delete(entry_id):
+    delete_entry_from_drive(entry_id)
     delete_entry(entry_id)
     flash("Entry deleted.", "success")
     return redirect(url_for("index"))
@@ -93,6 +111,26 @@ def summarize(entry_id):
         flash(f"Summary ({provider}): {summary}", "info")
     except Exception as e:
         flash(f"Error from {provider}: {e}", "error")
+    return redirect(url_for("index"))
+
+
+@app.route("/sync", methods=["POST"])
+def sync():
+    try:
+        synced, errors = sync_all_entries()
+        flash(f"Synced {synced} entries to Google Drive. {errors} errors.", "success" if errors == 0 else "info")
+    except Exception as e:
+        flash(f"Drive sync failed: {e}", "error")
+    return redirect(url_for("index"))
+
+
+@app.route("/drive-setup", methods=["POST"])
+def drive_setup():
+    try:
+        get_drive_service()
+        flash("Google Drive connected.", "success")
+    except Exception as e:
+        flash(f"Drive setup failed: {e}", "error")
     return redirect(url_for("index"))
 
 

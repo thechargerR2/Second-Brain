@@ -259,3 +259,46 @@ textarea {
     padding: 0.25rem;
     font-size: 0.8rem;
 }
+
+/* Drive Sync */
+.drive-sync-bar {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    padding: 0.75rem 1rem;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.btn-drive {
+    background: #4285f4;
+    color: #fff;
+}
+
+.btn-drive:hover {
+    background: #3367d6;
+}
+
+.drive-status {
+    font-size: 0.85rem;
+    color: #666;
+}
+
+.drive-connected {
+    color: #2e7d32;
+    font-weight: 600;
+}
+
+.drive-hint {
+    color: #999;
+    font-style: italic;
+}
+
+.drive-icon {
+    color: #4285f4;
+    font-size: 1.1rem;
+    margin-left: auto;
+    cursor: default;
+}

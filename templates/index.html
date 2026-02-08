@@ -2,6 +2,21 @@
 {% block content %}
 <h1>Dashboard</h1>
 
+<div class="drive-sync-bar">
+    {% if drive_configured and drive_authenticated %}
+    <form method="post" action="{{ url_for('sync') }}" class="inline-form">
+        <button type="submit" class="btn btn-drive">Sync All to Google Drive</button>
+    </form>
+    <span class="drive-status drive-connected">Drive connected</span>
+    {% elif drive_configured %}
+    <form method="post" action="{{ url_for('drive_setup') }}" class="inline-form">
+        <button type="submit" class="btn btn-drive">Connect Google Drive</button>
+    </form>
+    {% else %}
+    <span class="drive-status drive-hint">Add credentials.json to enable Google Drive sync</span>
+    {% endif %}
+</div>
+
 <form class="search-form" method="get" action="{{ url_for('index') }}">
     <input type="text" name="search" placeholder="Search entries..." value="{{ search }}">
     <button type="submit">Search</button>
@@ -17,6 +32,9 @@
         <div class="entry-header">
             <span class="badge badge-{{ entry.type }}">{{ entry.type }}</span>
             <h3>{{ entry.title }}</h3>
+            {% if entry.drive_file_id %}
+            <span class="drive-icon" title="Synced to Google Drive">&#9729;</span>
+            {% endif %}
         </div>
         {% if entry.content %}
         <p class="entry-content">{{ entry.content[:200] }}{% if entry.content|length > 200 %}...{% endif %}</p>
