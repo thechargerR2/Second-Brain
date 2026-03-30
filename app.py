@@ -1,4 +1,5 @@
 import os
+from datetime import date
 from flask import Flask, render_template, request, redirect, url_for, flash
 from dotenv import load_dotenv
 from database import init_db, add_entry, get_all_entries, get_entry, delete_entry
@@ -7,6 +8,8 @@ from ai_providers import (
     chat_with_gemini,
     summarize_with_claude,
     summarize_with_gemini,
+    generate_dd_memo_claude,
+    generate_dd_memo_gemini,
 )
 from drive_sync import (
     sync_entry_to_drive,
@@ -132,6 +135,56 @@ def drive_setup():
     except Exception as e:
         flash(f"Drive setup failed: {e}", "error")
     return redirect(url_for("index"))
+
+
+TICKER_NAMES = {
+    "CCJ": "Cameco Corporation",
+    "FNMA": "Federal National Mortgage Association",
+    "AAPL": "Apple Inc.",
+    "MSFT": "Microsoft Corporation",
+    "GOOGL": "Alphabet Inc.",
+    "AMZN": "Amazon.com Inc.",
+    "TSLA": "Tesla Inc.",
+    "NVDA": "NVIDIA Corporation",
+    "META": "Meta Platforms Inc.",
+}
+
+
+@app.route("/dd-memo", methods=["GET", "POST"])
+def dd_memo():
+    memo = None
+    ticker = ""
+    company_name = ""
+    provider = "claude"
+    if request.method == "POST":
+        ticker = request.form.get("ticker", "").strip().upper()
+        company_name = request.form.get("company_name", "").strip()
+        provider = request.form.get("provider", "claude")
+        if not ticker:
+            flash("Ticker is required.", "error")
+            return render_template("dd_memo.html")
+        if not company_name:
+            company_name = TICKER_NAMES.get(ticker, ticker)
+        today = date.today().strftime("%B %d, %Y")
+        try:
+            if provider == "gemini":
+                memo = generate_dd_memo_gemini(ticker, company_name, today)
+            else:
+                memo = generate_dd_memo_claude(ticker, company_name, today)
+            # Save memo as a document entry
+            entry_id = add_entry(
+                "document",
+                f"DD Memo: {ticker} ({company_name})",
+                memo,
+            )
+            sync_entry_to_drive(entry_id)
+            flash(f"DD Memo for {ticker} saved to your Second Brain.", "success")
+        except Exception as e:
+            flash(f"Error generating memo ({provider}): {e}", "error")
+    return render_template(
+        "dd_memo.html", memo=memo, ticker=ticker,
+        company_name=company_name, provider=provider,
+    )
 
 
 if __name__ == "__main__":

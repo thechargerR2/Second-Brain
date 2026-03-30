@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Investment DD Memo</h1>
+
+<form method="post" class="dd-form">
+    <div class="dd-form-row">
+        <div class="dd-field">
+            <label for="ticker">Ticker Symbol</label>
+            <input type="text" name="ticker" id="ticker" required placeholder="e.g. CCJ, AAPL"
+                   value="{{ ticker }}" style="text-transform: uppercase;">
+        </div>
+        <div class="dd-field">
+            <label for="company_name">Company Name (optional)</label>
+            <input type="text" name="company_name" id="company_name"
+                   placeholder="Auto-detected if blank" value="{{ company_name }}">
+        </div>
+        <div class="dd-field">
+            <label for="provider">AI Provider</label>
+            <select name="provider" id="provider">
+                <option value="claude" {% if provider == 'claude' %}selected{% endif %}>Claude</option>
+                <option value="gemini" {% if provider == 'gemini' %}selected{% endif %}>Gemini</option>
+            </select>
+        </div>
+    </div>
+    <button type="submit">Generate DD Memo</button>
+</form>
+
+{% if memo %}
+<div class="memo-output">
+    <div class="memo-header">
+        <h2>{{ ticker }} — {{ company_name }}</h2>
+        <span class="badge badge-document">DD MEMO</span>
+    </div>
+    <div class="memo-content">{{ memo }}</div>
+</div>
+{% endif %}
+{% endblock %}
