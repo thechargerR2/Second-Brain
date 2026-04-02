@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Daily Wellness</title>
+<style>
+  :root {
+    --bg: #0a0a1a;
+    --card: #12122a;
+    --accent: #7c6ff7;
+    --accent-glow: rgba(124,111,247,0.3);
+    --text: #e8e6f0;
+    --text-dim: #8884a8;
+    --success: #4ade80;
+    --warm: #f5a623;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: rgba(124,111,247,0.2); }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    min-height: -webkit-fill-available;
+    overflow-x: hidden;
+    touch-action: manipulation;
+  }
+
+  /* ── Header ── */
+  .header {
+    text-align: center;
+    padding: 2rem 1rem 1rem;
+    padding-top: max(2rem, env(safe-area-inset-top));
+  }
+  .header h1 {
+    font-size: 1.8rem;
+    font-weight: 300;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    background: linear-gradient(135deg, var(--accent), #a78bfa, #c4b5fd);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .streak-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin-top: 0.75rem;
+    padding: 0.4rem 1rem;
+    background: rgba(245,166,35,0.12);
+    border: 1px solid rgba(245,166,35,0.25);
+    border-radius: 2rem;
+    font-size: 0.85rem;
+    color: var(--warm);
+  }
+
+  /* ── Nav Tabs ── */
+  .nav {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 1rem;
+  }
+  .nav-tab {
+    display: inline-block;
+    background: var(--card);
+    border: 1px solid rgba(124,111,247,0.15);
+    color: var(--text-dim);
+    padding: 0.7rem 1.4rem;
+    border-radius: 2rem;
+    font-size: 0.9rem;
+    cursor: pointer;
+    touch-action: manipulation;
+    -webkit-user-select: none;
+    user-select: none;
+    text-decoration: none;
+    text-align: center;
+    transition: background 0.3s, color 0.3s, border-color 0.3s;
+  }
+  .nav-tab.active {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+    box-shadow: 0 0 20px var(--accent-glow);
+  }
+
+  /* ── Sections ── */
+  .section {
+    display: none;
+    max-width: 560px;
+    margin: 0 auto;
+    padding: 1.5rem;
+  }
+  .section.active { display: block; }
+
+  .card {
+    background: var(--card);
+    border: 1px solid rgba(124,111,247,0.1);
+    border-radius: 1.25rem;
+    padding: 2rem;
+    margin-bottom: 1.25rem;
+  }
+
+  h2 {
+    font-size: 1.1rem;
+    font-weight: 500;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 1.25rem;
+    text-align: center;
+  }
+
+  /* ── Tappable pill (reusable) ── */
+  .pill {
+    display: inline-block;
+    background: rgba(124,111,247,0.08);
+    border: 1px solid rgba(124,111,247,0.2);
+    color: var(--text);
+    padding: 0.5rem 1.1rem;
+    border-radius: 1.5rem;
+    font-size: 0.85rem;
+    cursor: pointer;
+    touch-action: manipulation;
+    -webkit-user-select: none;
+    user-select: none;
+    transition: background 0.2s, border-color 0.2s, color 0.2s;
+  }
+  .pill.selected, .pill:active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+  }
+
+  /* ── Meditation ── */
+  .timer-display {
+    font-size: 4.5rem;
+    font-weight: 200;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+    padding: 1.5rem 0;
+  }
+  .timer-options {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+  }
+
+  .btn-main {
+    display: block;
+    width: 100%;
+    padding: 1rem;
+    border: none;
+    border-radius: 1rem;
+    font-size: 1.05rem;
+    font-weight: 500;
+    cursor: pointer;
+    touch-action: manipulation;
+    -webkit-user-select: none;
+    user-select: none;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    -webkit-appearance: none;
+    appearance: none;
+    transition: background 0.2s;
+  }
+  .btn-start {
+    background: linear-gradient(135deg, var(--accent), #9b8afb);
+    color: #fff;
+    box-shadow: 0 4px 24px var(--accent-glow);
+  }
+  .btn-stop { background: rgba(239,68,68,0.15); color: #ef4444; border: 1px solid rgba(239,68,68,0.3); }
+
+  .ambience-row {
+    display: flex;
+    justify-content: center;
+    gap: 0.75rem;
+    margin-top: 1rem;
+  }
+  .ambience-btn {
+    display: inline-block;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    color: var(--text-dim);
+    padding: 0.5rem 1rem;
+    border-radius: 1.5rem;
+    font-size: 0.8rem;
+    cursor: pointer;
+    touch-action: manipulation;
+    -webkit-user-select: none;
+    user-select: none;
+    transition: background 0.2s, border-color 0.2s;
+  }
+  .ambience-btn.active { background: rgba(124,111,247,0.15); border-color: var(--accent); color: var(--accent); }
+
+  /* ── Breathing ── */
+  .breath-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 1rem 0;
+  }
+  .breath-circle-wrap {
+    position: relative;
+    width: 220px;
+    height: 220px;
+    margin-bottom: 1.5rem;
+  }
+  .breath-circle {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(124,111,247,0.15), transparent 70%);
+    border: 2px solid rgba(124,111,247,0.3);
+    transition: transform 4s ease-in-out, border-color 0.5s, box-shadow 0.5s;
+    -webkit-transform: scale(0.5);
+    transform: scale(0.5);
+  }
+  .breath-circle.expand {
+    -webkit-transform: scale(1);
+    transform: scale(1);
+    border-color: var(--accent);
+    box-shadow: 0 0 40px var(--accent-glow);
+  }
+  .breath-label {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.3rem;
+    font-weight: 300;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text);
+  }
+  .breath-pattern-options {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1.25rem;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .breath-cycles {
+    font-size: 0.85rem;
+    color: var(--text-dim);
+    margin-top: 1rem;
+  }
+
+  /* ── Gratitude ── */
+  .gratitude-prompt {
+    text-align: center;
+    font-size: 1.1rem;
+    font-weight: 300;
+    color: var(--text);
+    line-height: 1.6;
+    margin-bottom: 1.5rem;
+    min-height: 3.2rem;
+  }
+  .gratitude-input {
+    width: 100%;
+    min-height: 120px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(124,111,247,0.15);
+    border-radius: 1rem;
+    padding: 1rem;
+    color: var(--text);
+    font-size: 16px; /* prevents iOS zoom on focus */
+    font-family: inherit;
+    resize: vertical;
+    outline: none;
+    -webkit-appearance: none;
+    appearance: none;
+    transition: border-color 0.3s;
+  }
+  .gratitude-input:focus { border-color: var(--accent); }
+  .gratitude-input::placeholder { color: var(--text-dim); }
+
+  .gratitude-entries { margin-top: 1rem; }
+  .gratitude-entry {
+    background: rgba(255,255,255,0.02);
+    border-left: 3px solid var(--accent);
+    padding: 0.75rem 1rem;
+    margin-bottom: 0.5rem;
+    border-radius: 0 0.5rem 0.5rem 0;
+    font-size: 0.95rem;
+    line-height: 1.5;
+  }
+  .entry-count {
+    text-align: center;
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    margin-top: 0.75rem;
+  }
+
+  .btn-secondary {
+    display: inline-block;
+    background: rgba(124,111,247,0.1);
+    border: 1px solid rgba(124,111,247,0.25);
+    color: var(--accent);
+    padding: 0.65rem 1.2rem;
+    border-radius: 1.5rem;
+    font-size: 0.85rem;
+    cursor: pointer;
+    touch-action: manipulation;
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-appearance: none;
+    appearance: none;
+    transition: background 0.2s;
+  }
+
+  /* ── Today's Progress ── */
+  .progress-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.75rem;
+    text-align: center;
+  }
+  .progress-item {
+    padding: 1rem 0.5rem;
+    background: rgba(255,255,255,0.02);
+    border-radius: 1rem;
+    border: 1px solid rgba(255,255,255,0.05);
+  }
+  .progress-icon { font-size: 1.5rem; margin-bottom: 0.4rem; }
+  .progress-label { font-size: 0.75rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.05em; }
+  .progress-check { color: var(--success); font-size: 1.2rem; margin-top: 0.3rem; }
+  .progress-pending { color: var(--text-dim); font-size: 0.8rem; margin-top: 0.3rem; }
+
+  @media (max-width: 480px) {
+    .timer-display { font-size: 3.5rem; }
+    .breath-circle-wrap { width: 180px; height: 180px; }
+    .card { padding: 1.5rem; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>Daily Wellness</h1>
+  <div class="streak-badge">
+    <span>&#x1F525;</span>
+    <span id="streakText">0 day streak</span>
+  </div>
+</div>
+
+<div class="nav">
+  <div class="nav-tab active" data-section="meditate">Meditate</div>
+  <div class="nav-tab" data-section="breathe">Breathe</div>
+  <div class="nav-tab" data-section="gratitude">Gratitude</div>
+</div>
+
+<!-- MEDITATION -->
+<div id="sec-meditate" class="section active">
+  <div class="card">
+    <h2>Meditation Timer</h2>
+    <div class="timer-options">
+      <div class="pill" data-mins="5">5 min</div>
+      <div class="pill selected" data-mins="10">10 min</div>
+      <div class="pill" data-mins="15">15 min</div>
+      <div class="pill" data-mins="20">20 min</div>
+    </div>
+    <div class="timer-display" id="timerDisplay">10:00</div>
+    <div class="btn-main btn-start" id="timerBtn">Begin</div>
+    <div class="ambience-row">
+      <div class="ambience-btn" data-sound="rain">Rain</div>
+      <div class="ambience-btn" data-sound="ocean">Ocean</div>
+      <div class="ambience-btn" data-sound="silence">Silence</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Today's Progress</h2>
+    <div class="progress-grid">
+      <div class="progress-item">
+        <div class="progress-icon">&#x1F9D8;</div>
+        <div class="progress-label">Meditate</div>
+        <div id="prog-meditate" class="progress-pending">&#x2013;</div>
+      </div>
+      <div class="progress-item">
+        <div class="progress-icon">&#x1F32C;&#xFE0F;</div>
+        <div class="progress-label">Breathe</div>
+        <div id="prog-breathe" class="progress-pending">&#x2013;</div>
+      </div>
+      <div class="progress-item">
+        <div class="progress-icon">&#x1F64F;</div>
+        <div class="progress-label">Gratitude</div>
+        <div id="prog-gratitude" class="progress-pending">&#x2013;</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- BREATHING -->
+<div id="sec-breathe" class="section">
+  <div class="card">
+    <h2>Breathing Exercise</h2>
+    <div class="breath-pattern-options">
+      <div class="pill selected" data-pattern="box">Box (4-4-4-4)</div>
+      <div class="pill" data-pattern="relax">Relax (4-7-8)</div>
+      <div class="pill" data-pattern="energize">Energize (6-0-2)</div>
+    </div>
+    <div class="breath-container">
+      <div class="breath-circle-wrap">
+        <div class="breath-circle" id="breathCircle"></div>
+        <div class="breath-label" id="breathLabel">Ready</div>
+      </div>
+      <div class="btn-main btn-start" id="breathBtn" style="max-width:320px">Begin</div>
+      <div class="breath-cycles" id="breathCycles"></div>
+    </div>
+  </div>
+</div>
+
+<!-- GRATITUDE -->
+<div id="sec-gratitude" class="section">
+  <div class="card">
+    <h2>Gratitude Journal</h2>
+    <div class="gratitude-prompt" id="gratitudePrompt"></div>
+    <textarea class="gratitude-input" id="gratitudeInput" placeholder="What are you grateful for today?"></textarea>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:0.75rem">
+      <div class="btn-secondary" id="newPromptBtn">New Prompt</div>
+      <div class="btn-secondary" id="saveGratitudeBtn" style="background:var(--accent);color:#fff;border-color:var(--accent)">Save Entry</div>
+    </div>
+    <div class="gratitude-entries" id="gratitudeEntries"></div>
+    <div class="entry-count" id="entryCount"></div>
+  </div>
+</div>
+
+<script>
+// Wrap in DOMContentLoaded + tap helper for iOS
+document.addEventListener('DOMContentLoaded', function() {
+
+  // iOS-safe tap handler: uses touchend with fallback to click
+  function onTap(el, fn) {
+    if (!el) return;
+    var touched = false;
+    el.addEventListener('touchend', function(e) {
+      e.preventDefault();
+      touched = true;
+      fn.call(this, e);
+    }, {passive: false});
+    el.addEventListener('click', function(e) {
+      if (!touched) fn.call(this, e);
+      touched = false;
+    });
+  }
+
+  // State
+  var STORAGE_KEY = 'wellness_streak';
+  var TODAY_KEY = 'wellness_today';
+  var timerSeconds = 600;
+  var timerRemaining = 600;
+  var timerInterval = null;
+  var timerRunning = false;
+
+  var breathPatterns = {
+    box:      { inhale: 4, hold1: 4, exhale: 4, hold2: 4 },
+    relax:    { inhale: 4, hold1: 7, exhale: 8, hold2: 0 },
+    energize: { inhale: 6, hold1: 0, exhale: 2, hold2: 0 }
+  };
+  var currentBreathPattern = 'box';
+  var breathRunning = false;
+  var breathTimeout = null;
+  var breathCycleCount = 0;
+
+  var prompts = [
+    "What made you smile today?",
+    "Who is someone you're thankful for, and why?",
+    "What's a small comfort you often take for granted?",
+    "What ability or skill are you grateful to have?",
+    "What's something beautiful you noticed recently?",
+    "What challenge helped you grow?",
+    "What's a memory that always warms your heart?",
+    "What part of your daily routine do you enjoy most?",
+    "What's something in nature you appreciate?",
+    "Who made a positive difference in your life this week?",
+    "What's a simple pleasure that brings you joy?",
+    "What opportunity are you grateful for right now?",
+    "What's something about your health you appreciate?",
+    "What piece of technology makes your life easier?",
+    "What lesson are you thankful you learned?"
+  ];
+
+  // Audio
+  var audioCtx = null;
+  var ambienceNode = null;
+  var ambienceType = null;
+
+  function getAudioCtx() {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    return audioCtx;
+  }
+
+  function playBell() {
+    try {
+      var ctx = getAudioCtx();
+      var osc = ctx.createOscillator();
+      var gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(528, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(396, ctx.currentTime + 2);
+      gain.gain.setValueAtTime(0.3, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 2.5);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + 2.5);
+    } catch(e) {}
+  }
+
+  function stopAmbience() {
+    if (ambienceNode) {
+      try { ambienceNode.source.stop(); } catch(e) {}
+      ambienceNode = null;
+    }
+    ambienceType = null;
+  }
+
+  function startAmbience(type, btn) {
+    var allAmb = document.querySelectorAll('.ambience-btn');
+    for (var i = 0; i < allAmb.length; i++) allAmb[i].classList.remove('active');
+
+    if (ambienceType === type || type === 'silence') {
+      stopAmbience();
+      if (type === 'silence') btn.classList.add('active');
+      return;
+    }
+    stopAmbience();
+    btn.classList.add('active');
+    ambienceType = type;
+
+    try {
+      var ctx = getAudioCtx();
+      var bufferSize = 2 * ctx.sampleRate;
+      var buffer = ctx.createBuffer(2, bufferSize, ctx.sampleRate);
+      for (var ch = 0; ch < 2; ch++) {
+        var data = buffer.getChannelData(ch);
+        if (type === 'rain') {
+          for (var j = 0; j < bufferSize; j++) {
+            data[j] = (Math.random() * 2 - 1) * 0.08;
+            if (Math.random() < 0.001) data[j] *= 4;
+          }
+        } else if (type === 'ocean') {
+          for (var j = 0; j < bufferSize; j++) {
+            var t = j / ctx.sampleRate;
+            var wave = Math.sin(t * 0.15 * Math.PI * 2) * 0.5 + 0.5;
+            data[j] = (Math.random() * 2 - 1) * 0.06 * wave;
+          }
+        }
+      }
+      var source = ctx.createBufferSource();
+      source.buffer = buffer;
+      source.loop = true;
+      var filter = ctx.createBiquadFilter();
+      filter.type = 'lowpass';
+      filter.frequency.value = type === 'rain' ? 3000 : 800;
+      var gain = ctx.createGain();
+      gain.gain.value = 0.5;
+      source.connect(filter);
+      filter.connect(gain);
+      gain.connect(ctx.destination);
+      source.start();
+      ambienceNode = { source: source, gain: gain };
+    } catch(e) {}
+  }
+
+  // Timer
+  function updateTimerDisplay() {
+    var m = Math.floor(timerRemaining / 60);
+    var s = timerRemaining % 60;
+    document.getElementById('timerDisplay').textContent =
+      (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s;
+  }
+
+  function toggleTimer() {
+    var btn = document.getElementById('timerBtn');
+    if (timerRunning) {
+      clearInterval(timerInterval);
+      timerRunning = false;
+      timerRemaining = timerSeconds;
+      updateTimerDisplay();
+      btn.textContent = 'Begin';
+      btn.className = 'btn-main btn-start';
+    } else {
+      timerRunning = true;
+      btn.textContent = 'Stop';
+      btn.className = 'btn-main btn-stop';
+      playBell();
+      timerInterval = setInterval(function() {
+        timerRemaining--;
+        updateTimerDisplay();
+        if (timerRemaining <= 0) {
+          clearInterval(timerInterval);
+          timerRunning = false;
+          playBell();
+          setTimeout(playBell, 1500);
+          btn.textContent = 'Begin';
+          btn.className = 'btn-main btn-start';
+          timerRemaining = timerSeconds;
+          setTimeout(updateTimerDisplay, 100);
+          markDone('meditate');
+        }
+      }, 1000);
+    }
+  }
+
+  // Breathing
+  function toggleBreathing() {
+    var btn = document.getElementById('breathBtn');
+    if (breathRunning) {
+      breathRunning = false;
+      clearTimeout(breathTimeout);
+      document.getElementById('breathCircle').classList.remove('expand');
+      document.getElementById('breathLabel').textContent = 'Ready';
+      btn.textContent = 'Begin';
+      btn.className = 'btn-main btn-start';
+      document.getElementById('breathCycles').textContent = '';
+      return;
+    }
+    breathRunning = true;
+    breathCycleCount = 0;
+    btn.textContent = 'Stop';
+    btn.className = 'btn-main btn-stop';
+    runBreathCycle();
+  }
+
+  function runBreathCycle() {
+    if (!breathRunning) return;
+    var p = breathPatterns[currentBreathPattern];
+    var circle = document.getElementById('breathCircle');
+    var label = document.getElementById('breathLabel');
+    var phases = [];
+
+    phases.push({ text: 'Breathe In', expand: true, duration: p.inhale });
+    if (p.hold1 > 0) phases.push({ text: 'Hold', expand: true, duration: p.hold1 });
+    phases.push({ text: 'Breathe Out', expand: false, duration: p.exhale });
+    if (p.hold2 > 0) phases.push({ text: 'Hold', expand: false, duration: p.hold2 });
+
+    var idx = 0;
+    function nextPhase() {
+      if (!breathRunning) return;
+      if (idx >= phases.length) {
+        breathCycleCount++;
+        document.getElementById('breathCycles').textContent = 'Cycles: ' + breathCycleCount;
+        if (breathCycleCount >= 8) {
+          breathRunning = false;
+          circle.classList.remove('expand');
+          circle.style.transition = 'transform 1s ease-in-out, border-color 0.5s, box-shadow 0.5s';
+          label.textContent = 'Done';
+          document.getElementById('breathBtn').textContent = 'Begin';
+          document.getElementById('breathBtn').className = 'btn-main btn-start';
+          markDone('breathe');
+          return;
+        }
+        idx = 0;
+      }
+      var phase = phases[idx];
+      label.textContent = phase.text;
+      if (phase.expand) {
+        circle.style.transition = 'transform ' + phase.duration + 's ease-in-out, border-color 0.5s, box-shadow 0.5s';
+        circle.classList.add('expand');
+      } else if (phase.text === 'Breathe Out') {
+        circle.style.transition = 'transform ' + phase.duration + 's ease-in-out, border-color 0.5s, box-shadow 0.5s';
+        circle.classList.remove('expand');
+      }
+      idx++;
+      breathTimeout = setTimeout(nextPhase, phase.duration * 1000);
+    }
+    circle.style.transition = 'transform ' + p.inhale + 's ease-in-out, border-color 0.5s, box-shadow 0.5s';
+    nextPhase();
+  }
+
+  // Gratitude
+  function newPrompt() {
+    var el = document.getElementById('gratitudePrompt');
+    var current = el.textContent;
+    var next;
+    do { next = prompts[Math.floor(Math.random() * prompts.length)]; } while (next === current && prompts.length > 1);
+    el.textContent = next;
+  }
+
+  function saveGratitude() {
+    var input = document.getElementById('gratitudeInput');
+    var text = input.value.trim();
+    if (!text) return;
+    var container = document.getElementById('gratitudeEntries');
+    var entry = document.createElement('div');
+    entry.className = 'gratitude-entry';
+    entry.textContent = text;
+    if (container.firstChild) {
+      container.insertBefore(entry, container.firstChild);
+    } else {
+      container.appendChild(entry);
+    }
+    var count = container.children.length;
+    document.getElementById('entryCount').textContent = count + (count === 1 ? ' entry' : ' entries') + ' today';
+    input.value = '';
+    newPrompt();
+    if (count >= 1) markDone('gratitude');
+  }
+
+  // Progress & Streaks
+  function getTodayStr() {
+    return new Date().toISOString().slice(0, 10);
+  }
+
+  function getTodayProgress() {
+    try {
+      var data = JSON.parse(localStorage.getItem(TODAY_KEY) || '{}');
+      if (data.date !== getTodayStr()) return { date: getTodayStr(), meditate: false, breathe: false, gratitude: false };
+      return data;
+    } catch(e) { return { date: getTodayStr(), meditate: false, breathe: false, gratitude: false }; }
+  }
+
+  function markDone(activity) {
+    var prog = getTodayProgress();
+    prog[activity] = true;
+    prog.date = getTodayStr();
+    try { localStorage.setItem(TODAY_KEY, JSON.stringify(prog)); } catch(e) {}
+    updateProgressUI();
+    checkStreakUpdate();
+  }
+
+  function updateProgressUI() {
+    var prog = getTodayProgress();
+    var keys = ['meditate', 'breathe', 'gratitude'];
+    for (var i = 0; i < keys.length; i++) {
+      var el = document.getElementById('prog-' + keys[i]);
+      if (prog[keys[i]]) {
+        el.innerHTML = '&#x2713;';
+        el.className = 'progress-check';
+      } else {
+        el.innerHTML = '&#x2013;';
+        el.className = 'progress-pending';
+      }
+    }
+  }
+
+  function getStreakData() {
+    try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{"count":0,"lastDate":""}'); }
+    catch(e) { return { count: 0, lastDate: '' }; }
+  }
+
+  function checkStreakUpdate() {
+    var prog = getTodayProgress();
+    if (!prog.meditate || !prog.breathe || !prog.gratitude) return;
+    var streak = getStreakData();
+    var today = getTodayStr();
+    if (streak.lastDate === today) return;
+    var yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    var yesterdayStr = yesterday.toISOString().slice(0, 10);
+    if (streak.lastDate === yesterdayStr) {
+      streak.count++;
+    } else {
+      streak.count = 1;
+    }
+    streak.lastDate = today;
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(streak)); } catch(e) {}
+    updateStreakUI();
+  }
+
+  function updateStreakUI() {
+    var streak = getStreakData();
+    var today = getTodayStr();
+    var yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    var yesterdayStr = yesterday.toISOString().slice(0, 10);
+    var displayCount = streak.count;
+    if (streak.lastDate !== today && streak.lastDate !== yesterdayStr) displayCount = 0;
+    document.getElementById('streakText').textContent = displayCount + ' day streak';
+  }
+
+  // ── BIND ALL EVENTS ──
+
+  // Nav tabs
+  var navTabs = document.querySelectorAll('.nav-tab');
+  for (var i = 0; i < navTabs.length; i++) {
+    onTap(navTabs[i], function() {
+      var name = this.getAttribute('data-section');
+      var sections = document.querySelectorAll('.section');
+      for (var j = 0; j < sections.length; j++) sections[j].classList.remove('active');
+      document.getElementById('sec-' + name).classList.add('active');
+      var tabs = document.querySelectorAll('.nav-tab');
+      for (var k = 0; k < tabs.length; k++) tabs[k].classList.remove('active');
+      this.classList.add('active');
+    });
+  }
+
+  // Timer duration pills
+  var timerPills = document.querySelectorAll('.timer-options .pill');
+  for (var i = 0; i < timerPills.length; i++) {
+    onTap(timerPills[i], function() {
+      if (timerRunning) return;
+      var mins = parseInt(this.getAttribute('data-mins'), 10);
+      timerSeconds = mins * 60;
+      timerRemaining = timerSeconds;
+      updateTimerDisplay();
+      var all = document.querySelectorAll('.timer-options .pill');
+      for (var j = 0; j < all.length; j++) all[j].classList.remove('selected');
+      this.classList.add('selected');
+    });
+  }
+
+  // Timer begin/stop
+  onTap(document.getElementById('timerBtn'), toggleTimer);
+
+  // Ambience
+  var ambBtns = document.querySelectorAll('.ambience-btn');
+  for (var i = 0; i < ambBtns.length; i++) {
+    onTap(ambBtns[i], function() {
+      startAmbience(this.getAttribute('data-sound'), this);
+    });
+  }
+
+  // Breath patterns
+  var bpPills = document.querySelectorAll('.breath-pattern-options .pill');
+  for (var i = 0; i < bpPills.length; i++) {
+    onTap(bpPills[i], function() {
+      if (breathRunning) return;
+      currentBreathPattern = this.getAttribute('data-pattern');
+      var all = document.querySelectorAll('.breath-pattern-options .pill');
+      for (var j = 0; j < all.length; j++) all[j].classList.remove('selected');
+      this.classList.add('selected');
+    });
+  }
+
+  // Breath begin/stop
+  onTap(document.getElementById('breathBtn'), toggleBreathing);
+
+  // Gratitude
+  onTap(document.getElementById('newPromptBtn'), newPrompt);
+  onTap(document.getElementById('saveGratitudeBtn'), saveGratitude);
+
+  document.getElementById('gratitudeInput').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      saveGratitude();
+    }
+  });
+
+  // Init
+  newPrompt();
+  updateProgressUI();
+  updateStreakUI();
+
+});
+</script>
+</body>
+</html>

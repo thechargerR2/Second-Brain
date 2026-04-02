@@ -31,12 +31,54 @@ def init_db():
     except sqlite3.OperationalError:
         pass  # Column already exists
 
+    # Add topic column for folder organization (migration)
+    try:
+        conn.execute("ALTER TABLE entries ADD COLUMN topic TEXT DEFAULT ''")
+        conn.commit()
+    except sqlite3.OperationalError:
+        pass  # Column already exists
+
+    # Add action_status column for action loop (migration)
+    try:
+        conn.execute("ALTER TABLE entries ADD COLUMN action_status TEXT DEFAULT ''")
+        conn.commit()
+    except sqlite3.OperationalError:
+        pass  # Column already exists
+
+    # Add action_source column for action loop (migration)
+    try:
+        conn.execute("ALTER TABLE entries ADD COLUMN action_source TEXT DEFAULT ''")
+        conn.commit()
+    except sqlite3.OperationalError:
+        pass  # Column already exists
+
+    # Add annotation column for Mosaic write capability (migration)
+    try:
+        conn.execute("ALTER TABLE entries ADD COLUMN annotation TEXT DEFAULT ''")
+        conn.commit()
+    except sqlite3.OperationalError:
+        pass  # Column already exists
+
+    # Add flagged column for Mosaic write capability (migration)
+    try:
+        conn.execute("ALTER TABLE entries ADD COLUMN flagged INTEGER DEFAULT 0")
+        conn.commit()
+    except sqlite3.OperationalError:
+        pass  # Column already exists
+
     conn.commit()
     conn.close()
 
 
 def add_entry(entry_type, title, content, url=""):
     conn = get_connection()
+    # Prevent duplicates — if a same-title entry exists, return its ID
+    existing = conn.execute(
+        "SELECT id FROM entries WHERE LOWER(title) = LOWER(?)", (title,)
+    ).fetchone()
+    if existing:
+        conn.close()
+        return existing["id"]
     cursor = conn.execute(
         "INSERT INTO entries (type, title, content, url) VALUES (?, ?, ?, ?)",
         (entry_type, title, content, url),

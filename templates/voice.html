@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Second Brain - Voice</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: #0d1117;
+            color: #e6edf3;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Header */
+        .header {
+            padding: 12px 16px;
+            background: #161b22;
+            border-bottom: 1px solid #30363d;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .header h1 {
+            font-size: 1.1rem;
+            color: #e94560;
+        }
+        .header a {
+            color: #8b949e;
+            text-decoration: none;
+            font-size: 0.85rem;
+        }
+
+        /* Chat area */
+        .chat-area {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .message {
+            max-width: 85%;
+            padding: 12px 16px;
+            border-radius: 16px;
+            line-height: 1.5;
+            font-size: 0.95rem;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        .message.user {
+            align-self: flex-end;
+            background: #1a3a5c;
+            color: #e6edf3;
+            border-bottom-right-radius: 4px;
+        }
+        .message.assistant {
+            align-self: flex-start;
+            background: #1c2333;
+            color: #e6edf3;
+            border-bottom-left-radius: 4px;
+            border: 1px solid #30363d;
+        }
+        .message.thinking {
+            align-self: flex-start;
+            background: #1c2333;
+            color: #8b949e;
+            border: 1px solid #30363d;
+            font-style: italic;
+        }
+
+        /* Controls */
+        .controls {
+            padding: 12px 16px;
+            background: #161b22;
+            border-top: 1px solid #30363d;
+        }
+        .input-row {
+            display: flex;
+            gap: 8px;
+            align-items: flex-end;
+        }
+        .input-row textarea {
+            flex: 1;
+            padding: 10px 14px;
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 20px;
+            color: #e6edf3;
+            font-size: 1rem;
+            font-family: inherit;
+            resize: none;
+            min-height: 44px;
+            max-height: 120px;
+            line-height: 1.4;
+        }
+        .input-row textarea::placeholder {
+            color: #484f58;
+        }
+        .input-row textarea:focus {
+            outline: none;
+            border-color: #e94560;
+        }
+
+        .btn-mic, .btn-send, .btn-stop-speech {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .btn-mic {
+            background: #21262d;
+            color: #8b949e;
+            font-size: 1.3rem;
+        }
+        .btn-mic.listening {
+            background: #e94560;
+            color: #fff;
+            animation: pulse 1.5s infinite;
+        }
+        .btn-send {
+            background: #e94560;
+            color: #fff;
+            font-size: 1.2rem;
+        }
+        .btn-send:disabled {
+            background: #21262d;
+            color: #484f58;
+            cursor: default;
+        }
+        .btn-stop-speech {
+            background: #da6d07;
+            color: #fff;
+            font-size: 0.9rem;
+            width: 36px;
+            height: 36px;
+        }
+
+        @keyframes pulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(233, 69, 96, 0.4); }
+            50% { box-shadow: 0 0 0 12px rgba(233, 69, 96, 0); }
+        }
+
+        /* Status */
+        .status {
+            text-align: center;
+            font-size: 0.8rem;
+            color: #484f58;
+            padding: 4px 0;
+        }
+        .status.active { color: #e94560; }
+
+        /* Welcome */
+        .welcome {
+            text-align: center;
+            color: #484f58;
+            padding: 40px 20px;
+        }
+        .welcome h2 {
+            font-size: 1.3rem;
+            margin-bottom: 8px;
+            color: #8b949e;
+        }
+        .welcome p { font-size: 0.9rem; }
+
+        /* Speaking indicator on assistant messages */
+        .message.speaking {
+            border-color: #e94560;
+        }
+
+        /* Safe area for notched phones */
+        @supports (padding-bottom: env(safe-area-inset-bottom)) {
+            .controls { padding-bottom: calc(12px + env(safe-area-inset-bottom)); }
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <h1>Second Brain</h1>
+    <a href="/">Dashboard</a>
+</div>
+
+<div class="chat-area" id="chatArea">
+    <div class="welcome" id="welcome">
+        <h2>Voice Chat</h2>
+        <p>Tap the mic to ask a question about your notes, research, and documents.</p>
+    </div>
+</div>
+
+<div class="controls">
+    <div class="status" id="status">&nbsp;</div>
+    <div class="input-row">
+        <button class="btn-mic" id="btnMic" title="Hold to speak">&#127908;</button>
+        <textarea id="inputText" rows="1" placeholder="Ask anything..." autocomplete="off"></textarea>
+        <button class="btn-send" id="btnSend" disabled title="Send">&#9654;</button>
+    </div>
+</div>
+
+<script>
+const chatArea = document.getElementById('chatArea');
+const welcome = document.getElementById('welcome');
+const inputText = document.getElementById('inputText');
+const btnMic = document.getElementById('btnMic');
+const btnSend = document.getElementById('btnSend');
+const status = document.getElementById('status');
+
+let isListening = false;
+let recognition = null;
+let currentUtterance = null;
+let isSpeaking = false;
+
+// ── Speech Recognition Setup ──
+const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+if (SpeechRecognition) {
+    recognition = new SpeechRecognition();
+    recognition.continuous = false;
+    recognition.interimResults = true;
+    recognition.lang = 'en-US';
+
+    recognition.onstart = () => {
+        isListening = true;
+        btnMic.classList.add('listening');
+        setStatus('Listening...', true);
+    };
+
+    recognition.onresult = (event) => {
+        let transcript = '';
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+            transcript += event.results[i][0].transcript;
+        }
+        inputText.value = transcript;
+        autoResize();
+        updateSendBtn();
+    };
+
+    recognition.onend = () => {
+        isListening = false;
+        btnMic.classList.remove('listening');
+        setStatus('');
+        // Auto-send if we got text
+        if (inputText.value.trim()) {
+            sendMessage();
+        }
+    };
+
+    recognition.onerror = (event) => {
+        isListening = false;
+        btnMic.classList.remove('listening');
+        if (event.error !== 'no-speech' && event.error !== 'aborted') {
+            setStatus('Mic error: ' + event.error);
+        } else {
+            setStatus('');
+        }
+    };
+} else {
+    btnMic.style.display = 'none';
+}
+
+// ── Mic Button ──
+btnMic.addEventListener('click', () => {
+    if (!recognition) return;
+    // Stop any ongoing speech first
+    stopSpeaking();
+    if (isListening) {
+        recognition.stop();
+    } else {
+        inputText.value = '';
+        autoResize();
+        recognition.start();
+    }
+});
+
+// ── Send Button ──
+btnSend.addEventListener('click', sendMessage);
+
+// ── Enter to send (desktop) ──
+inputText.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+    }
+});
+
+inputText.addEventListener('input', () => {
+    autoResize();
+    updateSendBtn();
+});
+
+function autoResize() {
+    inputText.style.height = 'auto';
+    inputText.style.height = Math.min(inputText.scrollHeight, 120) + 'px';
+}
+
+function updateSendBtn() {
+    btnSend.disabled = !inputText.value.trim();
+}
+
+function setStatus(text, active = false) {
+    status.textContent = text || '\u00a0';
+    status.className = 'status' + (active ? ' active' : '');
+}
+
+function addMessage(role, text) {
+    welcome.style.display = 'none';
+    const div = document.createElement('div');
+    div.className = 'message ' + role;
+    div.textContent = text;
+    chatArea.appendChild(div);
+    chatArea.scrollTop = chatArea.scrollHeight;
+    return div;
+}
+
+function stopSpeaking() {
+    if (isSpeaking) {
+        speechSynthesis.cancel();
+        isSpeaking = false;
+        // Remove speaking class from all messages
+        document.querySelectorAll('.message.speaking').forEach(el => el.classList.remove('speaking'));
+    }
+}
+
+function speakText(text, messageEl) {
+    if (!('speechSynthesis' in window)) return;
+
+    stopSpeaking();
+
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.rate = 1.0;
+    utterance.pitch = 1.0;
+
+    utterance.onstart = () => {
+        isSpeaking = true;
+        if (messageEl) messageEl.classList.add('speaking');
+    };
+    utterance.onend = () => {
+        isSpeaking = false;
+        if (messageEl) messageEl.classList.remove('speaking');
+    };
+    utterance.onerror = () => {
+        isSpeaking = false;
+        if (messageEl) messageEl.classList.remove('speaking');
+    };
+
+    currentUtterance = utterance;
+    speechSynthesis.speak(utterance);
+}
+
+async function sendMessage() {
+    const question = inputText.value.trim();
+    if (!question) return;
+
+    // Stop any current speech
+    stopSpeaking();
+
+    addMessage('user', question);
+    inputText.value = '';
+    autoResize();
+    updateSendBtn();
+
+    const thinkingEl = addMessage('thinking', 'Searching your Second Brain...');
+    setStatus('Thinking...', true);
+
+    try {
+        const resp = await fetch('/api/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ question: question, provider: 'claude' })
+        });
+        const data = await resp.json();
+        thinkingEl.remove();
+        setStatus('');
+
+        if (data.error) {
+            addMessage('assistant', 'Error: ' + data.error);
+        } else {
+            const msgEl = addMessage('assistant', data.answer);
+            // Read the answer aloud
+            speakText(data.answer, msgEl);
+        }
+    } catch (err) {
+        thinkingEl.remove();
+        setStatus('');
+        addMessage('assistant', 'Connection error. Please try again.');
+    }
+}
+
+// Tap on an assistant message to replay its speech
+chatArea.addEventListener('click', (e) => {
+    const msg = e.target.closest('.message.assistant');
+    if (msg) {
+        if (isSpeaking) {
+            stopSpeaking();
+        } else {
+            speakText(msg.textContent, msg);
+        }
+    }
+});
+</script>
+
+</body>
+</html>
