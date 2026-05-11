@@ -50,6 +50,9 @@ logging.basicConfig(
         logging.StreamHandler(),
     ],
 )
+# Silence libraries that log full request URLs (token appears in path).
+for noisy in ("httpx", "httpcore", "telegram.request", "telegram._network"):
+    logging.getLogger(noisy).setLevel(logging.WARNING)
 log = logging.getLogger(__name__)
 
 # Ensure documents directory exists
