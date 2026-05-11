@@ -9,8 +9,8 @@ import re
 import shutil
 from pathlib import Path
 
-DOCUMENTS_DIR = Path("/Users/ronrusso/second-brain/documents")
-REPORTS_DIR = Path("/Users/ronrusso/stock_screener/reports")
+DOCUMENTS_DIR = Path.home() / "second-brain" / "documents"
+REPORTS_DIR = Path.home() / "stock_screener" / "reports"
 
 # Recurring auto-generated files to skip when syncing from reports
 SKIP_PATTERNS = [

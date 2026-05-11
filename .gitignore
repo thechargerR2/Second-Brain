@@ -1,6 +1,39 @@
 __pycache__/
 *.pyc
 .env
+.env.*
 *.db
+*.db.backup_*
+*.db-shm
+*.db-wal
+
+# Secrets / tokens
 credentials.json
 token.json
+google_token.json
+google_credentials.json
+service_account.json
+*.pem
+
+# Backups & temp
+*.bak
+*.bak.*
+*.swp
+*.orig
+.DS_Store
+
+# Virtual envs
+.venv/
+.venv*/
+venv/
+
+# Logs & local state
+*.log
+logs/
+.tunnel_url
+.gmail_processed_ids.json
+
+# Data & artifacts (local-only)
+attachments/
+inbox/
+documents/

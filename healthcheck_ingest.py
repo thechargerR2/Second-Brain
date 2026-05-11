@@ -28,7 +28,7 @@ LOG_FILE = os.path.join(LOG_DIR, "healthcheck_ingest.log")
 INGEST_LOG = os.path.join(BASE_DIR, "telegram_ingest.log")
 PLIST = os.path.expanduser("~/Library/LaunchAgents/com.broadburch.telegram-ingest.plist")
 
-BOT_TOKEN = "8763635224:AAE4p-Hd5zUhypLtT8Idy3pev76nSOgGhgs"
+BOT_TOKEN = os.environ["TELEGRAM_BOT_TOKEN"]
 CHAT_ID = 8620038671
 TELEGRAM_API = f"https://api.telegram.org/bot{BOT_TOKEN}"
 

@@ -54,6 +54,7 @@ logging.basicConfig(
 log = logging.getLogger("gmail_importer")
 
 # ── Email credentials from stock screener config ──────────────────────
+sys.path.insert(0, os.path.expanduser("~/stock_screener"))
 from config import EMAIL_CONFIG
 
 IMAP_SERVER = "imap.gmail.com"

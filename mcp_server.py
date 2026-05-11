@@ -119,11 +119,11 @@ def search_notes(query: str, limit: int = 10) -> str:
     for i, row in enumerate(rows):
         # Top result gets generous content, next 2 get moderate, rest get previews
         if i == 0:
-            max_chars = 4000
+            max_chars = 800
         elif i < 3:
-            max_chars = 2000
+            max_chars = 400
         else:
-            max_chars = 500
+            max_chars = 150
 
         entry_header = _format_entry(row, include_content=False)
         results.append(entry_header)
@@ -137,7 +137,7 @@ def search_notes(query: str, limit: int = 10) -> str:
         results.append("")
         total_len += len(results[-2]) if row["content"] else 0
         # Cap total output to keep response manageable for mobile clients
-        if total_len > 12000:
+        if total_len > 4000:
             results.append(f"[{len(rows) - i - 1} more results not shown — refine your query or use get_entry(id)]")
             break
 
@@ -297,6 +297,68 @@ def add_note(title: str, content: str, topic: str = "", entry_type: str = "note"
     conn.close()
 
     return f"Added entry #{entry_id}: '{title}' (type={entry_type}, topic={topic or 'none'})"
+
+
+
+
+@mcp.tool()
+def upload_attachment(
+    filename: str,
+    file_b64: str,
+    entry_id: int = 0,
+) -> str:
+    """Upload a file attachment to the Second Brain.
+    Pass the file as base64-encoded bytes in file_b64. Filename should include extension.
+    If entry_id is provided, a reference line is appended to that entry's content
+    so the attachment is discoverable via search_notes.
+    """
+    import base64
+    from datetime import datetime
+
+    try:
+        file_bytes = base64.b64decode(file_b64)
+    except Exception as e:
+        return f"ERROR: failed to decode base64: {e}"
+
+    if len(file_bytes) == 0:
+        return "ERROR: decoded file is empty"
+    if len(file_bytes) > 50 * 1024 * 1024:
+        return f"ERROR: file too large ({len(file_bytes)} bytes, max 50MB)"
+
+    ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+    stem, _, ext = filename.rpartition(".")
+    if not stem:
+        stem, ext = filename, "bin"
+    safe_stem = "".join(c if c.isalnum() or c in "-_" else "_" for c in stem)
+    saved_name = f"{safe_stem}_{ts}.{ext}"
+    saved_path = os.path.join(ATTACHMENTS_DIR, saved_name)
+
+    os.makedirs(ATTACHMENTS_DIR, exist_ok=True)
+    with open(saved_path, "wb") as f:
+        f.write(file_bytes)
+
+    linked_msg = ""
+    if entry_id:
+        conn = _get_conn()
+        row = conn.execute(
+            "SELECT content FROM entries WHERE id = ?", (entry_id,)
+        ).fetchone()
+        if row:
+            existing = row["content"] or ""
+            ref_line = f"\n\n**Attachment:** `{saved_name}` ({len(file_bytes)} bytes)"
+            new_content = existing + ref_line
+            conn.execute(
+                "UPDATE entries SET content = ? WHERE id = ?",
+                (new_content, entry_id),
+            )
+            conn.commit()
+            linked_msg = f" Linked to entry #{entry_id}."
+        else:
+            linked_msg = f" WARNING: entry #{entry_id} not found, file saved but unlinked."
+        conn.close()
+
+    return f"Saved {saved_name} ({len(file_bytes)} bytes) to attachments/.{linked_msg}"
+
 
 
 if __name__ == "__main__":

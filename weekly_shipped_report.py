@@ -18,15 +18,16 @@ from email.mime.multipart import MIMEMultipart
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(os.path.dirname(BASE_DIR), "stock_screener"))
 
+sys.path.insert(0, os.path.expanduser("~/stock_screener"))
 from config import EMAIL_CONFIG
 
 DB_PATH = os.path.join(BASE_DIR, "second_brain.db")
 
 REPOS = [
-    ("/Users/ronrusso/stock_screener", "Stock Screener"),
-    ("/Users/ronrusso/second-brain", "Second Brain"),
-    ("/Users/ronrusso/stock_dashboard", "Stock Dashboard"),
-    ("/Users/ronrusso/productivity-system", "Productivity System"),
+    (os.path.expanduser("~/stock_screener"), "Stock Screener"),
+    (os.path.expanduser("~/second-brain"), "Second Brain"),
+    (os.path.expanduser("~/stock_dashboard"), "Stock Dashboard"),
+    (os.path.expanduser("~/productivity-system"), "Productivity System"),
 ]
 
 RECIPIENTS = ["thechargerr2@gmail.com", "ron@broadburch.com"]
@@ -93,7 +94,7 @@ def get_new_entries(since):
 
 def get_new_reports(since):
     """Get new report files generated since cutoff."""
-    reports_dir = "/Users/ronrusso/stock_screener/reports"
+    reports_dir = os.path.expanduser("~/stock_screener/reports")
     if not os.path.isdir(reports_dir):
         return []
     cutoff_ts = since.timestamp()
